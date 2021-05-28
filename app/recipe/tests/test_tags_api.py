@@ -38,7 +38,7 @@ class PrivateTagsApiTest(testcases):
 
         res = self.client.get(TAGS_URL)
         tags =Tag.objects.all().order_by('-name') 
-        serializer = TagSerializers(tag, many=True)
+        serializer = TagSerializers(tags, many=True)
         self.asssertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
@@ -46,7 +46,7 @@ class PrivateTagsApiTest(testcases):
         '''Test that tags returned to authenticate user'''
         user2 = get_user_model().objects.create_user(
             'other@londondevapp.com',
-git            'testpass'
+            'testpass'
         )
         Tag.objects.create(user=user2, name='Fruity')
         tag = Tag.objects.create(user=self.user, name='comfortfood')
@@ -57,6 +57,24 @@ git            'testpass'
         self.assertEqual(len(res.data),1)
         self.assertEqual(res.data[0]['name'], tag.name)
 
+    def test_create_tag_successful(self):
+        '''Test creating a new tag'''
+        paylod = {'name':'test tag'}
+        self.client.post(TAGS_URL,paylod)
+
+        exists = Tag.objects.filter(
+            user = self.user,
+            name = paylod['name']
+        ).exists()
+        self.assertTrue(exists)
+
+    def test_create_tag_invalid(self):
+        '''Test creating  a new tag with invalid paylod'''
+        paylod = {'name':''}
+
+        res = self.client.post(TAGS_URL, paylod)
+            
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 
